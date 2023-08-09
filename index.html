@@ -58,6 +58,8 @@
                 <input type="text" inputmode="numeric" oninput="this.value = this.value.replace(/\D+/g, '')" placeholder="Maxantal Resultat" id="maxArticles">
                 <br>
                 <input type="button" value="Sök" onclick="loadRSSFeed(feedSelector.value, parseInt(maxArticles.value))">
+                <br>
+                <input type="button" value="Radera Källa" onclick="deleteSource()">
                 <h2>Ny källa:</h2>
                 <input type="text" id="sourceName" placeholder="Namn">
                 <br>
@@ -216,6 +218,11 @@
             return;
         }
 
+        function deleteSource()
+        {
+            const select = document.getElementById("feedSelector");
+            select.remove(select.selectedIndex);
+        }
         
     </script>
 </body>
