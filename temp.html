@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="rss.css">
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- 
+        Search
+        Interface
+        Generating
+        Many
+        Arrays
+        -->
+        <h1>R.O.F.L</h1>
+        <h4>| RSS - Online - Formatted - List |</h4>
+        
+        <div class="searchContainer">
+            
+            <div class="searchWindow">
+                <h2>Sök:</h2>
+                <input type="text" name="tagsSearch" id="tagsSearch" >
+                <input type="button" value="Search" onclick="loadRSSFeed()">
+                <h2>Hur?</h2>
+                <h3>Kopiera in ett URL</h3>
+            </div>
+            <div class="searchWindow">
+                <h2>Tags:</h2>
+                <ul>
+                    <li><h3>Spel</h3></li>
+                    <li><h3>Applikation</h3></li>
+                    <li><h3>En Spelare</h3></li>
+                    <li><h3>Två Spelare</h3></li>
+                    <li><h3>Misc.</h3></li>
+                </ul> 
+            </div>
+        </div>
+        <table id="data_table">
+            <tr>
+                <td><h2>Results:</h2></td>
+            </tr>
+        </table>
+    </div>
+
+
+
+    <script>
+
+        function clearTable()
+        {
+            let table = document.getElementById("data_table");
+            
+            let rowsLeft = true;
+            
+            while(rowsLeft === true)
+            {
+                let table_len = table.rows.length;
+                if(table_len > 0)
+                {
+                    table.deleteRow(0);
+                }
+                else
+                {
+                    rowsLeft = false;
+                }
+            }
+        }
+
+        function add(elements)
+        {
+            console.log(elements);
+
+            let table = document.getElementById("data_table");
+            let table_len = elements.length;
+            console.log(elements.length);
+
+            for(var i = 0; i < table_len + 1; i++)
+            {
+                console.log(elements[0]);
+                if(i != 0)
+                {
+                    let name = elements[i - 1].name;
+                    let desc = elements[i - 1].description;
+                    let title = elements[i - 1].title;
+
+                    desc = desc.replace("<![CDATA[", "").replace("]]>", "");
+
+                    var row = table.insertRow(i).outerHTML="<tr><td><a href=' " + title + "'><h2>" + name + "</h2></a><h3>" + desc + "</h3></td></tr>";
+                }
+                else
+                {
+                    var row = table.insertRow(i).outerHTML="<tr><td><h2>" + "Results:" + "</h2></td></tr>";
+                }
+            }
+            
+        }
+
+        function loadRSSFeed(/*load_url*/)
+        {
+            clearTable();
+            const RSS_URL = "https://corsproxy.io/?" + "https://skolmaten.se/tumba-gymnasium/rss/days/";
+            let totalFeeds = [];
+            
+            fetch(RSS_URL)
+            .then(response => response.text())
+            .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+            .then(data => {
+                console.log(data);
+                const items = data.querySelectorAll("item");
+                
+                items.forEach(el => {
+                    let currentFeed = {name: "", link: "", description: ""};
+                    currentFeed.name = el.querySelector("title").innerHTML;
+                    currentFeed.link = el.querySelector("link").innerHTML;
+                    currentFeed.description = el.querySelector("description").innerHTML;
+                    //console.log(currentFeed);
+                    //add(currentFeed);
+                    totalFeeds.push(currentFeed);
+
+                });
+                console.log(totalFeeds.length);
+                console.log(totalFeeds);
+                add(totalFeeds);
+                
+            });
+        }
+
+        
+        
+
+
+        
+    </script>
+</body>
+</html>
