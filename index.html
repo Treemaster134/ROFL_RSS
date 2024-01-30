@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=1.0, user-scalable=0">
+    <title>ROFL RSS</title>
+    <link rel="stylesheet" href="rss.css">
+    <script>
+        function checkIfSourceListExists()
+        {
+            if(localStorage.getItem("addedSources") === null)
+            {
+                let tempSources = [];
+                localStorage.setItem("addedSources", JSON.stringify(tempSources));
+                console.log(false);
+            }
+            else
+            {
+                console.log(true);
+            }
+        }
+
+        function loadFeedsIntoSelect()
+        {
+            let addedSources = JSON.parse(localStorage.getItem("addedSources"));
+            const select = document.getElementById("feedSelector");
+            
+            if(select.options.length != 0)
+            {
+                for(let i = select.options.length - 1; i > 0; i--)
+                {
+                    select.remove(i);
+                }
+            }
+
+            for(let i = 0; i < addedSources.length; i++)
+            {
+                let newFeed = new Option(addedSources[i].name, addedSources[i].link);
+                select.add(newFeed,undefined);
+            }
+            console.log(true);
+        }
+    </script>
+</head>
+<body onload="checkIfSourceListExists();loadFeedsIntoSelect();">
+
+    <div class="container">
+        
+        <!-- 
+        RSS
+        Online
+        Formatted
+        List
+        -->
+        <h1 id="top">R.O.F.L</h1>
+        <h4>| RSS - Online - Formatted - List |</h4>
+        
+        <div class="searchContainer">
+            
+            <div class="searchWindow">
+                <h2>Search:</h2>
+                <select id="feedSelector">
+                    <option value="nolinkselected">- Select source - </option>
+                </select>
+                <br>
+                <input type="text" inputmode="numeric" oninput="this.value = this.value.replace(/\D+/g, '')" placeholder="Max amount of items" id="maxArticles">
+                <br>
+                <input type="button" value="Search" onclick="loadRSSFeed(feedSelector.value, parseInt(maxArticles.value))">
+                <br>
+                <input type="button" value="Remove source" onclick="deleteSource()">
+                <h2>New source:</h2>
+                <input type="text" id="sourceName" placeholder="Name">
+                <br>
+                <input type="text" id="sourceLink" placeholder="Link">
+                <br>
+                <input type="button" value="Add" onclick="addNewSource(sourceLink.value, sourceName.value)">
+            </div>
+            <div class="searchWindow">
+                <h2>How to use:</h2>
+                <ul>
+                    <li><h3>Select a source from the dropdown and press "search"</h3></li>
+                    <li><h3>The results will be listed below</h3></li>
+                    <br>
+                    <li><h3>Add a new source by entering a name and link</h3></li>
+                    <li><h3>Press "Add" and the source will be added to the dropdown</h3></li>
+                    <h4>Disclaimer: List sources are stored using localStorage</h4>
+                </ul> 
+            </div>
+        </div>
+        <table id="data_table">
+            <tr>
+                <td><h2>Resultat:</h2></td>
+            </tr>
+        </table>
+    </div>
+
+    <button class="scrollToTopButton" onclick="document.getElementById('top').scrollIntoView();"><img src="up.png" ></button>
+    
+
+    <script>
+
+        function clearTable()
+        {
+            let table = document.getElementById("data_table");
+            
+            let rowsLeft = true;
+            
+            while(rowsLeft === true)
+            {
+                let table_len = table.rows.length;
+                if(table_len > 0)
+                {
+                    table.deleteRow(0);
+                }
+                else
+                {
+                    rowsLeft = false;
+                }
+            }
+        }
+
+        function add(elements)
+        {
+            console.log(elements);
+
+            let table = document.getElementById("data_table");
+            let table_len = elements.length;
+            console.log(elements.length);
+
+            for(var i = 0; i < table_len + 1; i++)
+            {
+                console.log(elements[0]);
+                if(i != 0)
+                {
+                    let name = elements[i - 1].name;
+                    let desc = elements[i - 1].description;
+                    let link = elements[i - 1].link;
+                    let date = elements[i - 1].date;
+
+                    desc = desc.replace("<![CDATA[", "").replace("]]>", "");
+                    desc = desc.replace("&lt;", "<").replace("&gt;", ">");
+
+                    if(desc[0] === "<" || desc[desc.length - 1] === ">")
+                    {}else
+                    {
+                        desc = "<h3>" + desc + "</h3>";
+                    }
+
+                    var row = table.insertRow(i).outerHTML="<tr><td><a href=' " + link + "'><h2>" + name + "</h2></a>" + desc + "<h4>" + date + "</h4>" + "</td></tr>";
+                }
+                else
+                {
+                    var row = table.insertRow(i).outerHTML="<tr><td><h2>" + "Resultat:" + "</h2></td></tr>";
+                }
+            }
+            
+        }
+
+        function loadRSSFeed(load_url, maxcount)
+        {
+            if(load_url === "nolinkselected")
+            {
+                console.log("invalid link");
+                return;
+            }
+
+            clearTable();
+            const RSS_URL = "https://corsproxy.io/?" + load_url;
+            let totalFeeds = [];
+            
+            fetch(RSS_URL)
+            .then(response => response.text())
+            .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+            .then(data => {
+                console.log(data);
+                const items = data.querySelectorAll("item");
+
+                let loopCounter = 1;
+
+                for(const el of items)
+                {
+                    if(loopCounter > maxcount)
+                    {
+                        break;
+                    }
+
+                    let currentFeed = {name: "", link: "", description: "", date:""};
+                    currentFeed.name = el.querySelector("title").innerHTML;
+                    currentFeed.link = el.querySelector("link").innerHTML;
+                    currentFeed.description = el.querySelector("description").innerHTML;
+                    currentFeed.date = el.querySelector("pubDate").innerHTML;
+                    //console.log(currentFeed);
+                    //add(currentFeed);
+                    totalFeeds.push(currentFeed);
+                    loopCounter += 1;
+                }
+
+
+                console.log(totalFeeds.length);
+                console.log(totalFeeds);
+                add(totalFeeds);
+                
+            });
+        }
+
+        
+        
+        function addNewSource(link, name)
+        {
+            let addedSources = JSON.parse(localStorage.getItem("addedSources"));
+            addedSources.push({"link": link, "name": name});
+            localStorage.setItem("addedSources", JSON.stringify(addedSources));
+
+            loadFeedsIntoSelect();
+
+            return;
+        }
+
+        function deleteSource()
+        {
+            const select = document.getElementById("feedSelector");
+            let addedSources = JSON.parse(localStorage.getItem("addedSources"));
+            addedSources.splice(select.selectedIndex, 1);
+
+            select.remove(select.selectedIndex);
+        }
+        
+    </script>
+</body>
+</html>
